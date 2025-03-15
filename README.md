@@ -46,7 +46,8 @@ Pour un monde sans surveillance, sans intermédiaires, par et pour les gens.
 
 ## 🎨 Logo  
 ![AirNet PCTamalou Logo](docs/logo.png) 
-*Toile maillée, flamme dorée, ondes turquoise – liberté tech.*
+
+*liberté tech.*
 
 ---
 
