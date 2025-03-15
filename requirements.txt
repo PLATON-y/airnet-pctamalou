@@ -1,0 +1,6 @@
+# Dépendances pour tous les scripts AirNet PCTamalou
+cryptography>=3.4.8      # Chiffrement (AES, ECC, PBKDF2, etc.)
+numpy>=1.21.0            # Calculs Chaos Sinusoïdal
+asyncio                  # Gestion asynchrone (inclus dans Python 3.7+)
+scapy>=2.4.5             # Gestion des paquets réseau
+pyqt5>=5.15.6            # Interface GUI pour pctamalou_airnet_messenger.py
