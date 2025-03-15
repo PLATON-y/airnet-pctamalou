@@ -28,7 +28,7 @@ Pour un monde sans surveillance, sans intermédiaires, par et pour les gens.
 ---
 
 ## 📜 Licences  
-- **Usage Perso/Communautaire** : [GPLv3](LICENSE-GPLv3.txt) – Gratuit, ouvert, libre.  
+- **Usage Perso/Communautaire** : [GPLv3](LICENSE) – Gratuit, ouvert, libre.  
 - **Usage Commercial** : [APCL](LICENSE-APCL.md)  
   - **PME** (<250 employés, CA <50M€) : 100€/an.  
   - **Grande Entreprise** (>250 employés, CA >50M€) : 500€/an.  
