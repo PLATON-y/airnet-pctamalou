@@ -3,7 +3,7 @@
 © Jonathan D. – Platon-y pour PCTamalou  
 
 Cette licence s’applique aux entités commerciales utilisant AirNet PCTamalou à des fins lucratives.  
-- **Usage personnel/non-commercial** : Voir [GPLv3](LICENSE-GPLv3.txt) – Gratuit.  
+- **Usage personnel/non-commercial** : Voir [GPLv3](LICENSE) – Gratuit.  
 - **Usage commercial** :  
   - **PME** (<250 employés, CA <50M€) : 100€/an, support email 48h.  
   - **Grande Entreprise** (>250 employés, CA >50M€) : 500€/an, support prioritaire 24h.  
