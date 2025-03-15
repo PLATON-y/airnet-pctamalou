@@ -4,3 +4,4 @@ numpy>=1.21.0            # Calculs Chaos Sinusoïdal
 asyncio                  # Gestion asynchrone (inclus dans Python 3.7+)
 scapy>=2.4.5             # Gestion des paquets réseau
 pyqt5>=5.15.6            # Interface GUI pour pctamalou_airnet_messenger.py
+pyaudio>=0.2.11          # Capture et lecture audio
