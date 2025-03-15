@@ -40,7 +40,7 @@ Pour un monde sans surveillance, sans intermédiaires, par et pour les gens.
 1. Clonez : `git clone https://github.com/pctamalou/airnet-pctamalou.git`  
 2. Dépendances : `pip install -r requirements.txt`  
 3. Exemple : `sudo python3 src/pctamalou_airnet_messenger.py`  
-*Plus dans [docs/install.md](docs/manifest.md)*
+*Plus dans [docs/manifest.md](docs/manifest.md)*
 
 ---
 
