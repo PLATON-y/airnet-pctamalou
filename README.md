@@ -52,7 +52,7 @@ Pour un monde sans surveillance, sans intermédiaires, par et pour les gens.
 
 ## 💰 Soutien  
 - **Dons** : [paypal.me/pctamalou]([https://www.paypal.com/paypalme/pctamaloufr/2]) – Un café pour coder libre !  
-- **Kits** : Bientôt sur [pctamalou.fr](#) (Pi + antenne + sticker).  
+- **Kits** : Bientôt sur [pctamalou.fr](https://pctamalou.fr) (Pi + antenne + sticker).  
 
 ---
 
