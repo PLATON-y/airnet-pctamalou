@@ -23,7 +23,7 @@ Pour un monde sans surveillance, sans intermédiaires, par et pour les gens.
 ## 🛠 Comment Contribuer ?
 - **Libre** : Forkez, codez, partagez !  
 - **Idées** : Apps, serveurs, Internet décentralisé ? Écrivez à **admin@pctamalou.fr**.  
-- **Supportez** : [Dons](#soutien) ou achetez un kit !
+- **Supportez** : [Dons](https://www.paypal.com/paypalme/pctamaloufr/2) ou achetez un kit !
 
 ---
 
