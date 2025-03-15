@@ -1,6 +1,6 @@
 # 🌐 AirNet PCTamalou  
 **Le Réseau de la Liberté Pensante**  
-*Créé par Jonathan – Platon-y pour PCTamalou – Mars 2025*
+*Créé par Jonathan D.– Platon-y pour PCTamalou – Mars 2025*
 
 ---
 
