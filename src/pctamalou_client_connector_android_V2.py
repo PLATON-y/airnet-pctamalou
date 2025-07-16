@@ -20,7 +20,7 @@ if os.system(f"ping -c 1 {CLIENT_IP}") == 0:
     print(f"Attention : IP {CLIENT_IP} prise. Relancez.")
     exit(1)
 
-# 🔹 Chiffrement PCTamalou (pour beacons chiffrés si root)
+# 🔹 Chiffrement PCTamalou
 def pctamalou_decrypt(ciphertext, sender_public_key):
     salt, iv, encrypted, signature = ciphertext[:16], ciphertext[16:32], ciphertext[32:-64], ciphertext[-64:]
     sender_public_key.verify(signature, encrypted, ec.ECDSA(hashes.SHA256()))
@@ -48,7 +48,7 @@ def connect_to_network():
         print(f"❌ Erreur connexion : {e}. Vérifiez root (su) ou Wi-Fi (iw dev).")
         return False
 
-# 🔹 Écoute Beacons (Mode Passif + INVITE)
+# 🔹 Écoute Beacons (Mode Passif + Combiné)
 async def listen_for_beacons():
     known_nodes = {}
     start_time = time.time()
@@ -56,20 +56,26 @@ async def listen_for_beacons():
         if Raw in pkt and pkt[Dot11].type == 0 and pkt[Dot11].subtype == 8:
             try:
                 raw_data = pkt[Raw].load
-                # Détection du beacon INVITE (non chiffré)
-                if raw_data.startswith(b"INVITE:"):
+                # Détection du beacon combiné (INVITE || BEACON)
+                if b"||" in raw_data:
+                    invite_part, encrypted_part = raw_data.split(b"||", 1)
+                    if invite_part.startswith(b"INVITE:"):
+                        node_id = invite_part.decode().split(":")[1]
+                        known_nodes[node_id] = time.time()
+                        print(f"🎯 Nœud détecté (INVITE): {node_id}")
+                    # Tentative de décryptage BEACON (si root/mode monitor)
+                    if len(encrypted_part) > 256:
+                        pub_key_pem = encrypted_part[-256:]
+                        pub_key = serialization.load_pem_public_key(pub_key_pem)
+                        decrypted = pctamalou_decrypt(encrypted_part[:-256], pub_key).decode()
+                        if decrypted.startswith("BEACON:"):
+                            node_id = decrypted.split(":")[1]
+                            known_nodes[node_id] = time.time()
+                            print(f"🎯 Nœud détecté (BEACON): {node_id}")
+                elif raw_data.startswith(b"INVITE:"):  # Compatibilité ancienne version
                     node_id = raw_data.decode().split(":")[1]
                     known_nodes[node_id] = time.time()
-                    print(f"🎯 Nœud détecté (INVITE): {node_id}")
-                # Détection des beacons chiffrés (si root/mode monitor)
-                elif len(raw_data) > 256:  # Hypothèse : présence d'une clé publique
-                    pub_key_pem = raw_data[-256:]
-                    pub_key = serialization.load_pem_public_key(pub_key_pem)
-                    decrypted = pctamalou_decrypt(raw_data[:-256], pub_key).decode()
-                    if decrypted.startswith("BEACON:"):
-                        node_id = decrypted.split(":")[1]
-                        known_nodes[node_id] = time.time()
-                        print(f"🎯 Nœud détecté (BEACON): {node_id}")
+                    print(f"🎯 Nœud détecté (INVITE seul): {node_id}")
             except Exception:
                 pass
     try:
