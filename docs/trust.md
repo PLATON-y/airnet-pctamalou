@@ -88,8 +88,4 @@ airnet-msg --no-mesh --bind 127.0.0.1
 Envoi pairwise : destinataire **accepté** (ou `--channel`).
 Réception : default DENY sauf acceptation.
 
-## Ce que ce n’est PAS
 
-- **Pas** de mot de passe global type `Platon-y_Air`
-- Le **radio mesh IBSS** reste ouvert au niveau L2 : le secret est **applicatif**
-- Aucun conseil pour contourner la puissance TX légale
