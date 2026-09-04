@@ -1,3 +1,27 @@
+Metadata-Version: 2.4
+Name: airnet
+Version: 0.4.0
+Summary: AirNet PCTamalou — mesh Wi-Fi décentralisé (UDP/batman-adv + X25519/ChaCha20-Poly1305 + trust/canaux)
+Author-email: "Platon-Y (Jonathan Ducros)" <admin@pctamalou.fr>
+License: GPL-3.0-or-later AND LicenseRef-APCL
+Project-URL: Homepage, https://pctamalou.fr
+Project-URL: Echoes, https://e-of-h.fr
+Project-URL: Issues, https://pctamalou.fr
+Keywords: mesh,wifi,crypto,x25519,airnet,pctamalou,batman-adv,trust
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE
+License-File: LICENSE-APCL.md
+License-File: AUTHORS
+Requires-Dist: cryptography>=42.0.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0; extra == "dev"
+Provides-Extra: gui
+Requires-Dist: PyQt5>=5.15; extra == "gui"
+Provides-Extra: voice
+Requires-Dist: PyAudio>=0.2.11; extra == "voice"
+Dynamic: license-file
+
 # AirNet PCTamalou
 
 **Le Réseau de la Liberté Pensante**  

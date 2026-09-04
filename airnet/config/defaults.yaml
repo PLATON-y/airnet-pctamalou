@@ -1,0 +1,39 @@
+# AirNet PCTamalou — configuration par défaut (0.3.0-rewrite)
+project:
+  name: AirNet PCTamalou
+  version: "0.3.0-rewrite"
+  author: Platon-Y (Jonathan Ducros)
+  orgs:
+    - PCTamalou
+    - Echoes of Hackers
+  urls:
+    - https://pctamalou.fr
+    - https://e-of-h.fr
+  contacts:
+    - admin@pctamalou.fr
+    - admin@e-of-h.fr
+
+keys:
+  # Surcharge possible via variable d'environnement AIRNET_KEYS_DIR
+  dir: null  # null => ~/.config/airnet/keys ou ./data/keys
+  dir_mode: 0o700
+  file_mode: 0o600
+
+crypto:
+  kex: X25519
+  kdf: HKDF-SHA256
+  aead: ChaCha20-Poly1305
+  blob_version: 1
+
+mesh:
+  batman: true
+  ssid: AirNetPCTamalou
+  freq: 2412
+  interface: null  # auto-detect wlan*
+  bat_iface: bat0
+  ip_prefix: "10.13.37"
+  max_txpower_dbm: 20
+
+transport:
+  proto: udp
+  port: 41337

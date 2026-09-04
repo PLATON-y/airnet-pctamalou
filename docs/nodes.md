@@ -1,218 +1,56 @@
-1️⃣ Programme Nœuds – pctamalou_node_runner.py
+# Nœuds AirNet — `airnet-node`
 
-Rôle
+## Rôle
 
-Transforme un Raspberry Pi en nœud du réseau mesh AirNet PCTamalou. Crée un Wi-Fi autonome, relaie les données, et annonce sa présence. C’est la colonne vertébrale du réseau – sans nœuds, pas de comm’ !
+Transforme une machine Linux (ex. Raspberry Pi) en **nœud** du mesh AirNet PCTamalou :
+configuration IBSS + batman-adv, IP sur `bat0`, beacons UDP périodiques.
 
-Pourquoi ?
+Le **routage / relais L2** est le travail de **batman-adv** — le processus Python
+annonce seulement sa présence (trames BEACON en clair) et reste actif.
 
-Un réseau décentralisé, P2P, sans dépendance à Internet ou aux autorités. Idéal pour communiquer librement en ville ou campagne, hors surveillance. Les nœuds s’auto-réparent avec BATMAN-adv et sécurisent tout avec notre chiffrement PCTamalou.
+## Stack actuelle (0.3.0-rewrite)
 
-Détails Techniques
+| Couche | Techno |
+|--------|--------|
+| Radio | Wi-Fi IBSS (ad-hoc), SSID `AirNetPCTamalou`, 2412 MHz |
+| Mesh | batman-adv → interface `bat0` |
+| Transport | **UDP** port `41337` (pas de Scapy / RadioTap pour le trafic applicatif) |
+| Crypto | `airnet.crypto` — X25519 + ChaCha20-Poly1305 (Phase 1) |
+| Découverte | BEACON plaintext : magic `AIR1` + pub + node_id + timestamp |
 
-    Technologie :
-        Wi-Fi IBSS (mode ad-hoc, sans point d’accès central).
-        BATMAN-adv (routage mesh dynamique).
-        Chiffrement PCTamalou : AES-256 (confidentialité), Chaos Sinusoïdal (brouillage), ECC SECP256R1 (authentification).
-    Portée : 100m (base), 5-15 km avec antenne Yagi + txpower 30 (selon obstacles).
-    Fonctionnement :
-        Détecte l’interface Wi-Fi (wlan0, wlan1, etc.).
-        Configure une IP unique (10.13.37.X).
-        Émet des beacons toutes les 10s.
-        Relais des paquets chiffrés uniquement.
+## Légalité radio (FR / UE)
 
-Matériel Nécessaire
+- Puissance TX max acceptée par le package : **20 dBm**.
+- Ne **jamais** faire `iw reg set BO` ni contourner le domaine réglementaire.
+- Par défaut, le driver garde sa puissance ; `--txpower` optionnel et plafonné.
 
-    Raspberry Pi 4 (~50€) ou Pi 3 (moins cher, mais moins puissant).
-    Carte Wi-Fi USB (~30€) : Alfa AWUS036ACH (Realtek RTL8187, mode ad-hoc OK).
-    Antenne omnidirectionnelle (fournie de base) ou Yagi 2.4 GHz (15-20 dBi, ~20€, connecteur RP-SMA).
-    Alimentation : Batterie solaire (20k mAh + panneau 10W, ~50€) ou USB-C 5V/3A (~5€).
-    MicroSD : 16 Go minimum (~5€).
-    Coût total : ~155€ (modulable).
+## Installation rapide
 
-Préparation du Matériel
+```bash
+pip install -e ".[dev]"
+sudo apt install iw batctl batman-adv-dkms   # outils mesh
+```
 
-    Flash Raspbian Lite :
-        Télécharge : raspberrypi.org.
-        Outil : Raspberry Pi Imager (PC/Mac).
-        Étapes :
-            Insère la MicroSD dans ton PC.
-            Ouvre Imager, choisis "Raspberry Pi OS Lite", clique "Écrire" (~5 min).
-            Insère dans le Pi.
-    Connexion Initiale :
-        Branche écran/clavier ou active SSH (fichier ssh vide dans /boot).
-        Login : pi / raspberry.
-        Change mot de passe : passwd.
-    Mise à Jour & Dépendances :
-        Connecte le Pi à Internet (Wi-Fi/Ethernet temporaire).
-        Terminal :
-        bash
+## Lancer
 
-    sudo apt update && sudo apt upgrade -y
-    sudo apt install python3 python3-pip iw batman-adv-dkms -y
-    pip3 install cryptography numpy asyncio scapy
-    Temps : ~15-20 min.
+```bash
+# Planification sans root (tests)
+airnet-node --dry-run --no-mesh --bind 127.0.0.1
 
-Branche la Carte Wi-Fi USB :
+# Sur le terrain (root pour iw / batctl)
+sudo airnet-node --iface wlan0
+# ou IP fixe :
+sudo airnet-node --ip 10.13.37.10/24
+```
 
-    Insère (ex. : Alfa AWUS036ACH).
+Sortie attendue : `node_id` (16 hex), IP `bat0`, beacons toutes les 10 s.
 
-    Vérifie :
+## Matériel (indicatif)
 
-        iw dev
-            Sortie : Interface wlanX (ex. : wlan0 ou wlan1).
-            Si rien : "Carte non reconnue. Vérifiez lsusb, changez de port ou de carte."
-    Positionnement :
-        Place l’antenne en hauteur (toit, arbre, mât).
-        Branche l’alimentation.
+- Raspberry Pi 3/4 + carte Wi-Fi USB compatible IBSS (ex. Alfa)
+- Antenne adaptée, alim stable
+- Respecte toujours la réglementation locale
 
-Le Script : pctamalou_node_runner.py
+## Ancien prototype
 
-import os
-import time
-import random
-import asyncio
-import hashlib
-from scapy.all import *
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-from cryptography.hazmat.primitives.asymmetric import ec
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-import numpy as np
-
-# 🔹 Auto-détection Wi-Fi
-def detect_wifi_interface():
-    interfaces = os.popen("iw dev | grep Interface | awk '{print $2}'").read().strip().split("\n")
-    for iface in interfaces:
-        if iface and "wlan" in iface:
-            return iface
-    raise Exception("Erreur : Aucune interface Wi-Fi détectée. Branchez une carte USB (ex. Alfa AWUS036ACH) et vérifiez avec 'lsusb'.")
-
-iface = detect_wifi_interface()
-NETWORK_NAME = "AirNetPCTamalou"
-BASE_KEY = b"Platon-y_Air"
-NODE_IP = f"10.13.37.{random.randint(2, 254)}"
-# Vérif IP unique (basique)
-if os.system(f"ping -c 1 {NODE_IP}") == 0:
-    print(f"Attention : IP {NODE_IP} déjà utilisée. Relancez le script.")
-    exit(1)
-private_key = ec.generate_private_key(ec.SECP256R1())
-public_key = private_key.public_key()
-NODE_ID = hashlib.sha256(public_key.public_bytes(serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo)).hexdigest()[:16]
-
-# 🔹 Chiffrement PCTamalou
-def pctamalou_encrypt(data, salt=os.urandom(16)):
-    kdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=salt, iterations=100000)
-    key = kdf.derive(BASE_KEY)
-    data_array = np.frombuffer(data, dtype=np.uint8)
-    chaos = np.sin(np.arange(len(data_array)) * 0.13) * 255
-    chaotic_data = np.bitwise_xor(data_array, chaos.astype(np.uint8))
-    iv = os.urandom(16)
-    cipher = Cipher(algorithms.AES(key), modes.CBC(iv), backend=default_backend())
-    encryptor = cipher.encryptor()
-    padded_data = chaotic_data.tobytes() + b"\x00" * (16 - len(chaotic_data) % 16)
-    encrypted = encryptor.update(padded_data) + encryptor.finalize()
-    signature = private_key.sign(encrypted, ec.ECDSA(hashes.SHA256()))
-    return salt + iv + encrypted + signature
-
-def pctamalou_decrypt(ciphertext, sender_public_key):
-    salt, iv, encrypted, signature = ciphertext[:16], ciphertext[16:32], ciphertext[32:-64], ciphertext[-64:]
-    sender_public_key.verify(signature, encrypted, ec.ECDSA(hashes.SHA256()))
-    kdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=salt, iterations=100000)
-    key = kdf.derive(BASE_KEY)
-    cipher = Cipher(algorithms.AES(key), modes.CBC(iv), backend=default_backend())
-    decryptor = cipher.decryptor()
-    padded_data = decryptor.update(encrypted) + decryptor.finalize()
-    data_array = np.frombuffer(padded_data.rstrip(b"\x00"), dtype=np.uint8)
-    chaos = np.sin(np.arange(len(data_array)) * 0.13) * 255
-    decrypted = np.bitwise_xor(data_array, chaos.astype(np.uint8))
-    return decrypted.tobytes()
-
-# 🔹 Setup Mesh BATMAN-adv
-def setup_mesh():
-    os.system(f"modprobe batman-adv")
-    os.system(f"iw dev {iface} set type ibss")
-    os.system(f"iw dev {iface} ibss join {NETWORK_NAME} 2412")
-    os.system(f"batctl if add {iface}")
-    os.system(f"ifconfig {iface} up")
-    os.system(f"ifconfig bat0 up {NODE_IP}/24")
-    try:
-        os.system(f"iwconfig {iface} txpower 30")
-    except:
-        print("Attention : txpower 30 refusé (limite légale ou driver). Essayez 'iw reg set BO' ou réduisez à 20.")
-    print(f"[+] AirNet Mesh ON – IP: {NODE_IP} – NodeID: {NODE_ID}")
-
-# 🔹 Beacon
-async def send_beacon():
-    while True:
-        pkt = RadioTap() / Dot11(type=0, subtype=8, addr1="ff:ff:ff:ff:ff:ff", addr2=RandMAC(), addr3=RandMAC()) / \
-              Raw(pctamalou_encrypt(f"BEACON:{NODE_ID}:{time.time()}".encode()) + public_key.public_bytes(serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo))
-        sendp(pkt, iface=iface, verbose=0, count=5)
-        await asyncio.sleep(10)
-
-# 🔹 Relais
-async def relay_traffic():
-    def handle_packet(pkt):
-        if Raw in pkt and pkt[Dot11].addr1 == "ff:ff:ff:ff:ff:ff":
-            try:
-                pub_key_pem = pkt[Raw].load[-256:]
-                pub_key = serialization.load_pem_public_key(pub_key_pem)
-                pctamalou_decrypt(pkt[Raw].load[:-256], pub_key)  # Vérifie validité
-                sendp(pkt, iface=iface, verbose=0)
-            except Exception:
-                pass  # Ignore paquets invalides
-    sniff(iface=iface, prn=handle_packet, store=0)
-
-if __name__ == "__main__":
-    print("🔥 PCTAMALOU NODE RUNNER – AIRNET 🔥")
-    print("Starting node setup...")
-    try:
-        setup_mesh()
-    except Exception as e:
-        print(f"Erreur setup : {e}. Vérifiez root (sudo) et matériel.")
-        exit(1)
-    print("Node is live! Relaying traffic and sending beacons...")
-    asyncio.ensure_future(send_beacon())
-    asyncio.ensure_future(relay_traffic())
-    asyncio.get_event_loop().run_forever()
-
-Comment Lancer ?
-
-    Copier :
-        Terminal : nano pctamalou_node_runner.py.
-        Copie-colle, sauvegarde (Ctrl+O, Enter, Ctrl+X).
-
-    Permissions :
-        chmod +x pctamalou_node_runner.py.
-
-    Lancer :
-        sudo python3 pctamalou_node_runner.py.
-
-    Sortie : (attendu)
-
-        🔥 PCTAMALOU NODE RUNNER – AIRNET 🔥
-        Starting node setup...
-        [+] AirNet Mesh ON – IP: 10.13.37.X – NodeID: abcd1234...
-        Node is live! Relaying traffic and sending beacons...
-
-Vérifications & Erreurs
-
-    OK : Beacons émis, trafic relayé.
-    Erreur "No Wi-Fi interface" : Vérifie iw dev ou lsusb. Carte mal branchée ou incompatible.
-    Erreur "Permission denied" : Relance avec sudo.
-    Pas de sortie : Alim ou antenne HS ? Teste avec une LED ou multimètre.
-    IP conflit : Relance, ou configure manuellement (10.13.37.X libre).
-
-Automatisation
-
-    Démarrage auto :
-
-    sudo crontab -e
-    @reboot python3 /home/pi/pctamalou_node_runner.py
-
-Conseils
-
-    Portée : 100m de base, 5-15 km avec Yagi (voir section Antennes).
-    Placement : Plus haut = mieux (toit, mât).
-    Entretien : Batterie solaire ~6h de soleil pour recharge.
+`legacy/pctamalou_node_runner.py` (Scapy / Chaos) est **déprécié** — musée uniquement.

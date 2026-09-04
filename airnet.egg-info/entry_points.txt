@@ -1,0 +1,7 @@
+[console_scripts]
+airnet-channel = airnet.apps.channel_cli:main
+airnet-connect = airnet.apps.connector:main
+airnet-msg = airnet.apps.messenger:main
+airnet-node = airnet.apps.node:main
+airnet-trust = airnet.apps.trust_cli:main
+airnet-voice = airnet.apps.voice:main

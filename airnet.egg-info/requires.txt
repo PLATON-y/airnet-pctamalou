@@ -1,0 +1,10 @@
+cryptography>=42.0.0
+
+[dev]
+pytest>=7.0
+
+[gui]
+PyQt5>=5.15
+
+[voice]
+PyAudio>=0.2.11

@@ -1,0 +1,1 @@
+"""Configuration AirNet (defaults YAML)."""

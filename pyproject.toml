@@ -1,0 +1,52 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "airnet"
+version = "0.4.0"
+description = "AirNet PCTamalou — mesh Wi-Fi décentralisé (UDP/batman-adv + X25519/ChaCha20-Poly1305 + trust/canaux)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "GPL-3.0-or-later AND LicenseRef-APCL" }
+authors = [
+  { name = "Platon-Y (Jonathan Ducros)", email = "admin@pctamalou.fr" },
+]
+keywords = ["mesh", "wifi", "crypto", "x25519", "airnet", "pctamalou", "batman-adv", "trust"]
+dependencies = [
+  "cryptography>=42.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=7.0",
+]
+gui = [
+  "PyQt5>=5.15",
+]
+voice = [
+  "PyAudio>=0.2.11",
+]
+
+[project.scripts]
+airnet-node = "airnet.apps.node:main"
+airnet-connect = "airnet.apps.connector:main"
+airnet-msg = "airnet.apps.messenger:main"
+airnet-voice = "airnet.apps.voice:main"
+airnet-trust = "airnet.apps.trust_cli:main"
+airnet-channel = "airnet.apps.channel_cli:main"
+
+[project.urls]
+Homepage = "https://pctamalou.fr"
+Echoes = "https://e-of-h.fr"
+Issues = "https://pctamalou.fr"
+
+[tool.setuptools.packages.find]
+include = ["airnet*"]
+
+[tool.setuptools.package-data]
+airnet = ["config/*.yaml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
